@@ -105,7 +105,7 @@
 - [ ] API 设置、猫的大小、提醒开关、快捷键、开机启动开关。
 - [ ] 密钥存入 macOS Keychain；日志不写入密钥、完整聊天或敏感请求头。
 - [ ] 清除会话、删除凭证、恢复设置；首版默认无遥测。
-- [ ] Apple Silicon 安装包、签名和公证流程；首次配置与无 API 模式可用。
+- [ ] Apple Silicon 自行分发预览包，明确标注 ad-hoc 签名和未公证状态；签名公证作为可选渠道。首次配置与无 API 模式可用。
 
 ### P1：首版验证后补充
 
@@ -132,7 +132,7 @@
 - URLSession + Swift Concurrency：封装兼容服务请求、取消及流式响应。官方提供异步字节流能力：[URLSession](https://developer.apple.com/documentation/Foundation/URLSession)。
 - Keychain + 本地配置文件：分别保存凭证与非敏感设置。凭证方案参考 [Keychain services](https://developer.apple.com/documentation/security/keychain-services)。
 - 系统状态适配器：显示器与系统休眠、用户会话切换事件；显示器休眠可参考 [screensDidSleepNotification](https://developer.apple.com/documentation/appkit/nsworkspace/screensdidsleepnotification)。锁屏与会话切换不是同一事件，锁屏观测的公开 API、可靠性和恢复路径须单独验证。
-- 分发：首版建议直接发布经过 Developer ID 签名、公证的安装包；App Store 作为独立发行任务评估。参考 [Apple 公证流程](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution)。
+- 分发：现阶段直接提供自行分发预览 ZIP，不要求 Apple 会员或公证；真实披露系统验证状态。Developer ID 签名、公证作为可选增强路径，App Store 作为独立发行任务评估。参考 [Apple 公证流程](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution)。
 
 备选方案：若团队以 TypeScript 为主、且 Windows 很快进入范围，可选 Electron + React。其窗口与电源状态接口能覆盖部分基础能力，但需要实测常驻成本，仍要处理 macOS 特有窗口行为。官方参考：[BrowserWindow](https://www.electronjs.org/docs/latest/api/browser-window)、[powerMonitor](https://github.com/electron/website/blob/main/docs/latest/api/power-monitor.md)。Tauri 可作为另一备选，但不作为当前默认方案。
 
@@ -187,7 +187,7 @@
 ### 阶段 5：兼容、长时间运行与发布，3–5 天
 
 - 真机验证锁屏、唤醒、Spaces、全屏、外接屏断开、网络故障、重启恢复。
-- 签名、公证、安装/升级/卸载验证，整理已知限制。
+- 默认预览包的安装/升级/卸载验证，整理未公证与跨机器限制；可选签名公证渠道独立验证。
 - 交付：可分发安装包、使用说明和测试记录。
 
 关键路径：窗口与系统信号验证 → 桌面猫 → 计时与提醒闭环 → QA 接入 → 整合与发布。先证明产品独特的提醒体验成立，再扩展聊天能力。
@@ -231,6 +231,6 @@
 1. 技术栈：原生 Swift/AppKit/SwiftUI；若团队技能或跨平台时间表不适合再改。
 2. 猫的形象：用户已指定以照片中的银灰虎斑猫设计；具体卡通画法及六组动作参考配套设计文档与图稿。
 3. 提醒参数：90 分钟周期、5 分钟休息、10 分钟稍后、约 1.8 倍放大。
-4. 平台与分发：macOS 14+、Apple Silicon 首发、签名公证后直接分发。
+4. 平台与分发：macOS 14+、Apple Silicon 首发、自行分发预览包；签名公证可选。
 
 本文件用于审阅范围和安排开发；尚未创建应用工程、安装依赖或实现功能。

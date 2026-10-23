@@ -17,7 +17,7 @@
 - Artwork source is assets/cat/animation-keyframes-v3.png; thinking poses must have no extra raised paw.
 - Pet and automatic reminders do not take keyboard focus. Chat takes focus only after an explicit user action.
 - API key goes to Keychain, never UserDefaults; no telemetry, no screen capture, no automatic clipboard reading.
-- Prototype can be ad-hoc signed locally; Developer ID signing, notarization and long-duration compatibility certification are release work.
+- Current distribution: self-distributed, ad-hoc-signed preview ZIP with explicit unnotarized status. Developer ID/notarization is an optional channel; long-duration compatibility checks remain pending.
 
 ## Review Focus
 

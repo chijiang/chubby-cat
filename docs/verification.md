@@ -4,6 +4,13 @@ Date: 2026-10-23. Platform: local Apple Silicon macOS, Apple Swift 6.3 Command L
 
 ## Checks to record
 
+- Current distribution policy: self-distributed preview by default. `bash scripts/release.sh` requires no Apple account credentials and creates an explicitly unnotarized preview; `--notarized` selects the separate opt-in Developer ID/Apple workflow. Previous notarization-only requirements below describe the earlier implementation and are superseded for default packaging.
+- Self-distribution verification: 16 core checks and 9 packaging checks pass. Built `dist/previews/chubby-cat-0.2.0-preview-macos-arm64.zip` with an optimized arm64 app, INSTALL.txt and distribution.json. ZIP integrity, ad-hoc signing, `notarized: false`, embedded icon, app metadata and SHA-256 verified. No external upload, Apple submission or security-setting change was performed; cross-machine first-launch remains unverified.
+
+- Icon/release follow-up: generated cat app icon, built ten macOS icon representations into `assets/icon/AppIcon.icns`, verified the ICNS container and 1024px representation, and confirmed the exact icon is embedded with `CFBundleIconFile` in development build 0.2.0. Build, strict signature verification and plist checks pass.
+- Release gates: 6 Python checks pass (missing credentials, rejecting ad-hoc release identity, requiring profile, no release-signing fallback, version validation, accepting only an explicit Accepted notarization status). The prior behavior was observed failing the initial 5 gate checks before implementation. The 16 core checks still pass.
+- Actual Developer ID signing, Apple submission, stapling and final Gatekeeper acceptance are **not executed**: no usable signing identity was found, and the user reports that their developer account still needs certificate configuration. There is no certified public release artifact yet. Configuration and release commands are in `docs/release.md`.
+
 - Rename/paste follow-up: package/product/app/display names changed to `chubby-cat`, modules to `ChubbyCat` / `ChubbyCatCore`. Workspace folder and existing bundle/preferences/Keychain identifiers stay compatible. Older README screenshots retain their original labels.
 - Clipboard regression: absent standard application/Edit menus reproduced Command-V failure in text and secure fields and Command-A failure. Added standard responder-chain menus (Undo/Redo/Cut/Copy/Paste/Select All and Quit). Native checks use temporary text, wait for actual key-window activation, and restore the original clipboard contents. Final native checks pass for Command-V in text, secure and multiline chat inputs, plus Command-A. All 16 core checks, packaged-resource smoke check, signature verification and plist validation also pass.
 

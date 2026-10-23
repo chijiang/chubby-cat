@@ -3,3 +3,8 @@ dist/
 .DS_Store
 .swiftpm/
 *.log
+__pycache__/
+*.p12
+*.p8
+*.cer
+*.certSigningRequest

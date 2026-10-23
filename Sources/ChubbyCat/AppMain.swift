@@ -19,6 +19,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         ApplicationMenu.install()
+        if let iconURL = Bundle.main.resourceURL?.appendingPathComponent("AppIcon.icns"), let icon = NSImage(contentsOf: iconURL) {
+            NSApp.applicationIconImage = icon
+        }
         if CommandLine.arguments.contains("--clipboard-checks") {
             Task { await ClipboardChecks.run() }
             return

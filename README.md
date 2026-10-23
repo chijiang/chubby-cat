@@ -2,6 +2,8 @@
 
 A native macOS desktop cat with quick AI Q&A and gentle screen-break reminders. The silver tabby character is based on the user's reference photos.
 
+<img src="assets/icon/app-icon-v1.png" alt="chubby-cat app icon: a silver tabby with green eyes on a sage-green tile" width="160">
+
 ## Preview
 
 The companion dashboard brings together the screen-break timer, quiet-time controls and six animation previews. **Demo reminder** lets you try the center-screen walk, stretch and return without waiting 90 minutes.
@@ -28,6 +30,8 @@ Interface screenshots are captured from the running macOS prototype. Shown prefe
 
 ## Run the prototype
 
+The current channel is a **self-distributed preview** outside the Mac App Store. Packaging this preview does not require Apple Developer Program membership or Apple account credentials. It is ad-hoc signed and **not notarized**, so macOS may prevent it from opening under default security settings. See the [distribution guide](docs/release.md) for installation context and optional notarization.
+
 Open `dist/chubby-cat.app`. The companion window and floating desktop cat appear together. Closing the companion window keeps the cat and timer running; quit from the cat icon in the menu bar.
 
 To rebuild with Apple's Command Line Tools (Swift 6+, macOS 14+):
@@ -39,6 +43,21 @@ bash scripts/build-app.sh
 The build has no downloaded dependencies. Full Xcode and its XCTest framework are not required. The script keeps compiler caches in the project and applies a local ad-hoc signature. It does not install the app or enable launch-at-login automatically.
 
 The project is now named **chubby-cat**. The workspace folder may still be named `desk-kitty`; existing preferences and Keychain identifiers are retained for compatibility. Older screenshots below may show the previous name.
+
+## Self-distributed preview
+
+Build a shareable preview ZIP locally:
+
+```bash
+bash scripts/release.sh --check
+bash scripts/release.sh
+```
+
+The default output is `dist/previews/chubby-cat-0.2.0-preview-macos-arm64.zip`, with a SHA-256 sidecar. The ZIP includes installation notes and metadata that explicitly identify it as ad-hoc signed and not notarized. It targets Apple Silicon / macOS 14+. This command packages files locally; it does not publish them or implement automatic updates.
+
+Users should verify the source and decide whether to proceed using [Apple's app safety guidance](https://support.apple.com/102445). No installer disables Gatekeeper or removes quarantine.
+
+Developer ID signing and notarization remain an **optional channel**, selected with `bash scripts/release.sh --notarized`. That channel requires the relevant membership, certificate and credentials, and produces an artifact only after its Apple checks pass. See [the configuration guide](docs/release.md).
 
 ## Try it
 
@@ -101,7 +120,7 @@ The integration check makes real URLSession requests for both fragmented SSE and
 
 ## Prototype boundaries
 
-- Local development build, **not notarized** or signed with a Developer ID certificate. Gatekeeper and cross-machine distribution remain release tasks.
+- Self-distributed previews are ad-hoc signed, **not notarized** and not signed with a Developer ID certificate. Gatekeeper may block default launch; cross-machine testing remains necessary. Optional notarized packaging is a separate channel.
 - Source art has about 200 pixels per pose. Frames are cropped from explicitly mapped regions, lightly cleaned and normalized in memory; source PNGs stay unchanged. Higher-resolution sprite production and detailed motion polish remain necessary for crisp large Retina display.
 - Lock/unlock uses best-effort system notification names, which are not a documented lock-state contract. Display/system sleep and session events use AppKit notifications. Starting the app while already locked and unusual notification loss are not certified.
 - Full-screen apps, Stage Manager, mixed-DPI multi-display setups, login behavior on every OS version, a real 90-minute interval and an eight-hour soak are manual release checks, not completed certification.
