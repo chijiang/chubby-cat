@@ -2,9 +2,33 @@
 
 A native macOS desktop cat with quick AI Q&A and gentle screen-break reminders. The silver tabby character is based on the user's reference photos.
 
+## Preview
+
+The companion dashboard brings together the screen-break timer, quiet-time controls and six animation previews. **Demo reminder** lets you try the center-screen walk, stretch and return without waiting 90 minutes.
+
+![Desk Kitty companion dashboard with the screen-break countdown and six cat animation previews](docs/images/companion.png)
+
+Quick Q&A — ask your cat a question
+
+Click the desktop cat or use the global shortcut to open Quick Q&A. This screenshot shows the first-run screen before connecting an API; add your provider and model in Settings to start chatting.
+
+![Desk Kitty Quick Q&A first-run screen with an input field and connection-settings shortcut](docs/images/quick-qa.png)
+
+
+
+Settings — companion, breaks and API connection
+
+Adjust the cat's size, motion, startup and shortcut preferences, then set the reminder interval and connect your own compatible API.
+
+![Desk Kitty settings showing companion preferences, the 90-minute reminder and API connection fields](docs/images/settings.png)
+
+
+
+Interface screenshots are captured from the running macOS prototype. Shown preferences and remaining time are illustrative of that session.
+
 ## Run the prototype
 
-Open **`dist/Desk Kitty.app`**. The companion window and floating desktop cat appear together. Closing the companion window keeps the cat and timer running; quit from the cat icon in the menu bar.
+Open `dist/Desk Kitty.app`. The companion window and floating desktop cat appear together. Closing the companion window keeps the cat and timer running; quit from the cat icon in the menu bar.
 
 To rebuild with Apple's Command Line Tools (Swift 6+, macOS 14+):
 
@@ -48,6 +72,8 @@ Only typed chat content and a brief companion instruction are sent directly to t
 - **Skip** starts a new cycle without recording a completed rest.
 - **Take a break** starts a rest countdown; confirm **I've rested** in the companion window or menu bar to reset. The countdown itself does not certify a real break.
 - Checkpoints save every 15 seconds and on orderly quit. Time while the program is not running is neither counted nor assumed to be a rest.
+
+
 
 ## Verification
 
