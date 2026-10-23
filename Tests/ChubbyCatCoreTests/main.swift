@@ -22,7 +22,13 @@ func require<T>(_ value: T?) throws -> T { guard let value else { throw CheckFai
 let timer = BreakSchedulerTests()
 let chat = ChatProtocolTests()
 let geometry = GeometryTests()
+let animation = CatAnimationTests()
 let checks: [(String, () throws -> Void)] = [
+    ("sprite cleanup preserves white fur and nose", animation.testArtworkCleaningKeepsWhiteFurAndRemovesColoredDebris),
+    ("animation remainder and delayed ticks", animation.testTimingRetainsRemainderAndCatchesUp),
+    ("one-shot animation and action reset", animation.testOneShotAndActionReset),
+    ("distance-driven gait and planted scale anchor", animation.testWalkingFollowsDistanceRatherThanTime),
+    ("ambient quiet gaps and interaction priority", animation.testAmbientHasQuietGapsAndNeverOverwritesAnInteraction),
     ("90-minute boundary and one-shot presentation", timer.testNinetyMinuteBoundaryAndPresentationIsOneShot),
     ("snooze keeps elapsed and excludes inactive time", timer.testSnoozeKeepsElapsedAndUsesOnlyActiveTime),
     ("short and sustained breaks", timer.testShortBreakResumesAndFiveMinuteBreakResets),

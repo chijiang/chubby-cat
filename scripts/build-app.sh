@@ -26,6 +26,10 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin_dir/chubby-cat" "$app/Contents/MacOS/chubby-cat"
 cp Sources/ChubbyCat/Resources/cat-atlas.png "$app/Contents/Resources/"
 cp Sources/ChubbyCat/Resources/cat-master.png "$app/Contents/Resources/"
+if [ -d Sources/ChubbyCat/Resources/cat-frames ]; then
+    rm -rf "$app/Contents/Resources/cat-frames"
+    cp -R Sources/ChubbyCat/Resources/cat-frames "$app/Contents/Resources/"
+fi
 cp assets/icon/AppIcon.icns "$app/Contents/Resources/"
 cat > "$app/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

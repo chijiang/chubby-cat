@@ -1,6 +1,40 @@
 # 小猫形象与动画帧设计
 
-日期：2026-10-23。用途：chubby-cat 桌面宠物的角色与动作设计；当前为美术设计阶段，不代表动画播放器已实现。
+日期：2026-10-23。用途：chubby-cat 桌面宠物的角色与动作设计。下方保留初始设计参数；实际播放器与 CAT-3 的当前实现以本节为准。
+
+## CAT-3 runtime update
+
+已实现六组动作播放器、160 ms 姿态淡化、按位移驱动的六帧行走、脚底锚点缩放和可中断的完整提醒。空闲时先静坐，再间歇观察、伸懒腰，长时间安静后打盹；不会自行乱走。聊天、拖动、提醒、手动预览和正式休息优先；隐藏、暂停、安静模式或屏幕会话不可用时停止空闲行为。打盹不表示用户已经休息。
+
+实际时序以 `Sources/ChubbyCatCore/CatAnimation.swift` 为唯一运行时来源：idle 6.01 秒循环；walk 预览 0.75 秒，移动时按每个体型宽度 0.72 倍的距离完成一轮；stretch 2.01 秒单次；think 3.02 秒；talk 1.66 秒；sleep 4.8 秒。空闲行为按 220 秒周期，20/95/140 秒附近短暂观察，60 秒附近伸展，180 秒后打盹。行为每秒检查，伸展保留 4 秒窗口以确保单次动作完整播放。它是可调的固定节奏，尚无随机行为系统。
+
+应用或 macOS 的“减少动态效果”变更会立即中断正在移动的提醒、回位并显示静止坐姿；下一次提醒只显示气泡。休息倒计时及提醒计时不由姿态动画控制。
+
+### 素材、导出与验收边界
+
+- 新行走源稿：`assets/cat/walk-cycle-v4.png`，实际 1536 × 1024，3 列 × 2 行，每个源单元 512px；有真实透明 alpha。逐帧目检为四肢结构，远侧腿可被遮挡，没有沿用旧的重复抬爪。
+- 其余五组来自 `animation-keyframes-v3.png`，约 200px 原始姿态细节。原图保留，未声称完成全套 Retina 重绘。
+- 运行时：`Sources/ChubbyCat/Resources/cat-frames/`，36 张 768 × 768 PNG 加 `index.json`。旧源稿按显式坐标裁切；离线清理低 alpha 与离散彩色杂点，保留白胸、白爪和鼻色。统一比例、轮廓重心及距底部 12% 的脚底基线；行走按耳尖至地面的身体高度匹配，避免抬高的尾巴把身体缩小。
+- AppKit 窗口使用整数逻辑点，缩放原点显式四舍五入，原生检查容许脚底误差不超过 0.5 点。基于轮廓的导出不能消除源画本身的全部比例变化；最终精修仍需逐帧复查。
+- 所有预览由实际导出的帧生成；GIF 为循环检视，App 中伸展只播放一次。1.8× 放大下另外五组清晰度仍待验收，CAT-3 保持 In Progress。
+
+在 repo 根目录重新生成：
+
+```bash
+bash scripts/export-cat-frames.sh
+bash scripts/build-app.sh
+```
+
+脚本默认使用 v4 行走稿；可向脚本传入另一张等分 3×2 行走稿路径。修改导出器后同时刷新运行时帧和下列预览，不要只替换 GIF。
+
+![idle](images/animation/idle.gif)
+![walk](images/animation/walk.gif)
+![stretch](images/animation/stretch.gif)
+![think](images/animation/think.gif)
+![talk](images/animation/talk.gif)
+![sleep](images/animation/sleep.gif)
+
+[36 帧对照图](images/animation/contact-sheet.png)。动作源稿和生成提示词见 `assets/cat/prompts.md`。
 
 ## 角色依据
 

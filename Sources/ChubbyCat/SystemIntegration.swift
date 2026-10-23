@@ -25,6 +25,9 @@ final class SystemIntegration {
         for (name, reason, inactive) in events {
             workspaceObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak model] _ in MainActor.assumeIsolated { model?.systemState(reason, inactive: inactive) } })
         }
+        workspaceObservers.append(center.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main) { [weak model] _ in
+            MainActor.assumeIsolated { model?.motionPreferenceChanged() }
+        })
         // Best-effort system notifications: useful in the prototype, not a documented lock-state API.
         for (name, inactive) in [("com.apple.screenIsLocked", true), ("com.apple.screenIsUnlocked", false)] {
             distributedObservers.append(DistributedNotificationCenter.default().addObserver(forName: Notification.Name(name), object: nil, queue: .main) { [weak model] _ in MainActor.assumeIsolated { model?.systemState("lock", inactive: inactive) } })

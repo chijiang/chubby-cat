@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ChubbyCatCore
 
 enum KittyStyle {
     static let ink = Color(red: 0.16, green: 0.19, blue: 0.17)

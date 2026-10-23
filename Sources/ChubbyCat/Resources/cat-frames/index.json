@@ -1,0 +1,59 @@
+{
+  "anchor" : [
+    0.5,
+    0.12
+  ],
+  "frames" : [
+    [
+      "idle-1.png",
+      "idle-2.png",
+      "idle-3.png",
+      "idle-4.png",
+      "idle-5.png",
+      "idle-6.png"
+    ],
+    [
+      "walk-1.png",
+      "walk-2.png",
+      "walk-3.png",
+      "walk-4.png",
+      "walk-5.png",
+      "walk-6.png"
+    ],
+    [
+      "stretch-1.png",
+      "stretch-2.png",
+      "stretch-3.png",
+      "stretch-4.png",
+      "stretch-5.png",
+      "stretch-6.png"
+    ],
+    [
+      "think-1.png",
+      "think-2.png",
+      "think-3.png",
+      "think-4.png",
+      "think-5.png",
+      "think-6.png"
+    ],
+    [
+      "talk-1.png",
+      "talk-2.png",
+      "talk-3.png",
+      "talk-4.png",
+      "talk-5.png",
+      "talk-6.png"
+    ],
+    [
+      "sleep-1.png",
+      "sleep-2.png",
+      "sleep-3.png",
+      "sleep-4.png",
+      "sleep-5.png",
+      "sleep-6.png"
+    ]
+  ],
+  "frameSize" : 768,
+  "source" : "legacy v3, cleaned and aligned; native pose detail approx 200px; walk uses assets\/cat\/walk-cycle-v4.png at 1536x1024",
+  "version" : 1
+}

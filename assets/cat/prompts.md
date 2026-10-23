@@ -64,3 +64,11 @@ The cat in row4 col4 should simply sit with both front paws on the floor, head t
 Use row4 col3 and row4 col6 as exact anatomical references for the front legs. Only the head angle and eyes vary to convey thinking.
 Preserve every other pose and every other part of the sheet. Keep the same exact 6 columns and 6 rows, 36 drawings, same framing, same tabby character, same eye color, stripes, tail, white bib and socks. Transparent background, no labels.
 This is removal of duplicated limbs, not an invitation to draw a new gesture.
+
+## CAT-3 行走重绘（v4）
+
+使用内置 imagegen，主形象作为身份参考。一次整表编辑网络失败，重试整表仍有彩色杂点，未接入运行时；最终采用单独重绘的六帧行走稿 `walk-cycle-v4.png`。请求尺寸为 3072×2048，工具实际输出 **1536×1024 RGBA**，以实际结果为准。原有五组动作继续使用 v3，未把其放大当成新细节。原始生成图保留，离线清理与对齐由 `Tools/CatArtExporter/main.swift` 完成。
+
+实际采用的提示词：
+
+Create a NEW six-frame WALK CYCLE sprite sheet of this exact silver tabby character. Input is character identity reference ONLY; redraw a side-on WALKING cat facing RIGHT in all six cells, not seated. Landscape image 3072x2048 pixels, a strictly uniform grid of THREE columns by TWO rows, exactly one full cat inside each square cell, transparent RGBA background. Equal body size, head height and ground baseline in all frames, grounded paws at 88% of each cell. Read frames left-to-right top row then bottom row. Six successive locomotion phases: (1) near foreleg forward planted and near hindleg back, (2) body passes over planted paws with far foreleg swinging, (3) near foreleg lifts under chest, (4) far foreleg forward planted with opposite hindleg back, (5) weight transfer opposite side, (6) near foreleg swings forward preparing frame 1. Anatomically exactly FOUR legs, natural far-side occlusion, no extra feet. Chubby round body and face, yellow-green eyes, white muzzle/chest and white mitten feet, silver gray dark tabby stripes, pink ears and nose, gently lifted thick striped tail. Match reference's soft cartoon illustration and charcoal outline. Fully show tail, whiskers and all anatomical paws; generous transparent gutter. No red or yellow artifacts, no floor, no shadows, no text, no gridlines, no props. Each pose must be distinct to animate genuine walking, never duplicate six identical poses. Deliver native detailed high-resolution clean antialiased artwork, NOT upscaled blurry raster.

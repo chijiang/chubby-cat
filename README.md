@@ -6,6 +6,12 @@ A native macOS desktop cat with quick AI Q&A and gentle screen-break reminders. 
 
 ## Preview
 
+The cat now blinks at a calmer pace, occasionally looks around, stretches and naps. Walking follows actual distance, including the slower return from a reminder. Dragging, chat and rest take priority over ambient poses.
+
+<img src="docs/images/animation/walk.gif" alt="Six-frame silver tabby walk cycle" width="240"> <img src="docs/images/animation/stretch.gif" alt="Silver tabby stretching with aligned paws" width="240">
+
+These are previews of the exported frames; the desktop app drives walking by distance and plays the stretch once. [All six action previews and export details](docs/cat-animation-design.md#cat-3-runtime-update).
+
 The companion dashboard brings together the screen-break timer, quiet-time controls and six animation previews. **Demo reminder** lets you try the center-screen walk, stretch and return without waiting 90 minutes.
 
 ![chubby-cat companion dashboard with the screen-break countdown and six cat animation previews](docs/images/companion.png)
@@ -105,8 +111,11 @@ bash scripts/test.sh
 # Native clipboard shortcut checks (temporarily uses and restores the clipboard)
 'dist/chubby-cat.app/Contents/MacOS/chubby-cat' --clipboard-checks
 
-# Bundled resources, 36 runtime-normalized frames, alpha masks and native pet panel
+# Bundled resources, 36 exported frames, alpha masks and native pet panel
 'dist/chubby-cat.app/Contents/MacOS/chubby-cat' --smoke-test
+
+# Native animation, interruption, reduced motion and complete reminder choreography
+'dist/chubby-cat.app/Contents/MacOS/chubby-cat' --animation-checks
 
 # In a second terminal, run a local compatible-API fixture
 python3 scripts/api-fixture.py
@@ -121,9 +130,9 @@ The integration check makes real URLSession requests for both fragmented SSE and
 ## Prototype boundaries
 
 - Self-distributed previews are ad-hoc signed, **not notarized** and not signed with a Developer ID certificate. Gatekeeper may block default launch; cross-machine testing remains necessary. Optional notarized packaging is a separate channel.
-- Source art has about 200 pixels per pose. Frames are cropped from explicitly mapped regions, lightly cleaned and normalized in memory; source PNGs stay unchanged. Higher-resolution sprite production and detailed motion polish remain necessary for crisp large Retina display.
+- Runtime art is exported as 36 aligned 768px RGBA frames. The new walk source uses 512px cells; the other five actions retain roughly 200px source detail. Export size alone does not add detail: those five actions still need higher-resolution redraws and final Retina review at 1.8×. Original art remains unchanged.
 - Lock/unlock uses best-effort system notification names, which are not a documented lock-state contract. Display/system sleep and session events use AppKit notifications. Starting the app while already locked and unusual notification loss are not certified.
 - Full-screen apps, Stage Manager, mixed-DPI multi-display setups, login behavior on every OS version, a real 90-minute interval and an eight-hour soak are manual release checks, not completed certification.
 - Text Chat Completions-compatible requests only; no tools, attachments, voice, Responses API, provider-specific extensions or automatic conference detection.
 
-See `docs/verification.md` for what was actually checked and `docs/cat-animation-design.md` for the original art and animation design.
+See [verification](docs/verification.md) for what was actually checked and [animation design](docs/cat-animation-design.md) for source art, runtime timing and reproducible export commands.

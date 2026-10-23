@@ -62,6 +62,9 @@ final class AppModel: ObservableObject {
     private var inactiveReasons: Set<String> = []
     private var reminderTask: Task<Void, Never>?
     private var previewTask: Task<Void, Never>?
+    private var previewID = UUID()
+    private var ambient = AmbientBehavior()
+    private var ambientAction: CatAction?
     private var chatTask: Task<Void, Never>?
     private var testTask: Task<Void, Never>?
     private var requestID = UUID()
@@ -71,9 +74,11 @@ final class AppModel: ObservableObject {
     private var isDemo = false
     private var savedPauseBeforeRest = false
     private let defaults: UserDefaults
+    private let systemReducedMotion: () -> Bool
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, systemReducedMotion: @escaping () -> Bool = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }) {
         self.defaults = defaults
+        self.systemReducedMotion = systemReducedMotion
         let config = defaults.data(forKey: "settings").flatMap { try? JSONDecoder().decode(AppSettings.self, from: $0) } ?? AppSettings()
         settings = config
         let checkpoint = defaults.data(forKey: "breakCheckpoint").flatMap { try? JSONDecoder().decode(BreakCheckpoint.self, from: $0) }
@@ -81,9 +86,9 @@ final class AppModel: ObservableObject {
             ?? BreakScheduler(interval: config.reminderMinutes * 60, restThreshold: config.restMinutes * 60)
         key = CredentialStore.read(for: config.baseURL)
         pet.normalSize = config.petSize
-        pet.sprite.reducedMotion = config.reducedMotion || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        pet.sprite.reducedMotion = config.reducedMotion || systemReducedMotion()
         pet.sprite.onClick = { [weak self] in self?.openChat() }
-        pet.sprite.onDragStart = { [weak self] in self?.cancelReminder(restoreHome: false); self?.previewTask?.cancel() }
+        pet.sprite.onDragStart = { [weak self] in self?.cancelReminder(restoreHome: false); self?.cancelPreview(); self?.pet.cancelMotion(); self?.setPetAction(.idle) }
         pet.sprite.onDragEnd = { [weak self] in self?.pet.recoverPosition(); self?.savePosition() }
         let position: NSPoint? = defaults.object(forKey: "petX") == nil ? nil : NSPoint(x: defaults.double(forKey: "petX"), y: defaults.double(forKey: "petY"))
         pet.show(at: position)
@@ -93,7 +98,7 @@ final class AppModel: ObservableObject {
         tick()
     }
 
-    var reducedMotion: Bool { settings.reducedMotion || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+    var reducedMotion: Bool { settings.reducedMotion || systemReducedMotion() }
     var quiet: Bool { (quietUntil ?? .distantPast) > Date() }
     var canPresentReminder: Bool { settings.remindersEnabled && !paused && !quiet && inactiveReasons.isEmpty && restRemaining == nil && !restNeedsConfirmation && !reminderActive && selectedInteractionIsIdle && petVisible }
     private var selectedInteractionIsIdle: Bool { !pet.sprite.isDragging && !(NSApp.isActive && NSApp.keyWindow != nil) }
@@ -126,6 +131,7 @@ final class AppModel: ObservableObject {
         else { status = "Keeping you company" }
         if scheduler.shouldRemind && canPresentReminder { beginReminder(demo: false) }
         if now - lastCheckpoint >= 15 { persist(); lastCheckpoint = now }
+        updateAmbient(delta: delta)
         onRefreshMenu?()
     }
 
@@ -140,9 +146,17 @@ final class AppModel: ObservableObject {
         settings.reminderMinutes = min(180, max(1, settings.reminderMinutes))
         settings.restMinutes = min(20, max(1, settings.restMinutes))
         scheduler.interval = settings.reminderMinutes * 60; scheduler.restThreshold = settings.restMinutes * 60
-        pet.sprite.reducedMotion = reducedMotion
+        motionPreferenceChanged()
         if !reminderActive { pet.resize(to: settings.petSize) }
         persist(); onHotkeyChanged?()
+    }
+    func motionPreferenceChanged() {
+        pet.sprite.reducedMotion = reducedMotion
+        if reducedMotion {
+            cancelReminder(restoreHome: true)
+            cancelPreview(); pet.cancelMotion()
+            setPetAction(restRemaining != nil || restNeedsConfirmation ? .sleep : .idle)
+        }
     }
     func persist() {
         if let data = try? JSONEncoder().encode(settings) { defaults.set(data, forKey: "settings") }
@@ -160,20 +174,47 @@ final class AppModel: ObservableObject {
         if quiet { cancelReminder(restoreHome: true) }
         tick()
     }
-    func openChat() { cancelReminder(restoreHome: true); onShowChat?() }
+    func openChat() { cancelPreview(); cancelReminder(restoreHome: true); if !sending { setPetAction(.idle) }; onShowChat?() }
     func newConversation() { stopChat(); entries = []; chatError = nil }
 
-    func preview(_ action: CatAction) {
-        cancelReminder(restoreHome: true); previewTask?.cancel()
+    private func setPetAction(_ action: CatAction) {
+        ambient.reset(); ambientAction = nil
         pet.sprite.action = action
+    }
+    private func updateAmbient(delta: Double) {
+        let enabled = petVisible && inactiveReasons.isEmpty && !reminderActive && !sending
+            && previewTask == nil && restRemaining == nil && !restNeedsConfirmation
+            && !quiet && !paused && !reducedMotion && selectedInteractionIsIdle
+        if let next = ambient.advance(by: delta, enabled: enabled) {
+            pet.sprite.action = next; ambientAction = next
+        } else {
+            if let previous = ambientAction, pet.sprite.action == previous,
+               !reminderActive && !sending && previewTask == nil && restRemaining == nil && !restNeedsConfirmation {
+                pet.sprite.action = .idle
+            }
+            ambientAction = nil
+        }
+    }
+    private func cancelPreview() {
+        previewTask?.cancel(); previewTask = nil; previewID = UUID()
+    }
+    func preview(_ action: CatAction) {
+        guard !sending, restRemaining == nil, !restNeedsConfirmation else { return }
+        cancelReminder(restoreHome: true); cancelPreview()
+        setPetAction(action)
+        let token = UUID(); previewID = token
         previewTask = Task { [weak self] in
-            do { try await Task.sleep(nanoseconds: 3_000_000_000); try Task.checkCancellation(); self?.pet.sprite.action = .idle } catch {}
+            do {
+                try await Task.sleep(nanoseconds: 3_000_000_000); try Task.checkCancellation()
+                guard let self, self.previewID == token else { return }
+                self.previewTask = nil; self.setPetAction(.idle)
+            } catch {}
         }
     }
 
     func beginReminder(demo: Bool) {
         guard !reminderActive, inactiveReasons.isEmpty else { return }
-        previewTask?.cancel()
+        cancelPreview(); setPetAction(.idle)
         if !petVisible { petVisible = true; pet.show(at: pet.panel.frame.origin) }
         isDemo = demo; reminderActive = true; reminderMessageVisible = false
         if !demo { scheduler.markPresented() }
@@ -187,12 +228,12 @@ final class AppModel: ObservableObject {
                 if !self.reducedMotion {
                     try await self.pet.move(to: .init(x: area.midX - size / 2, y: area.midY - size / 2), speed: 340, reduced: false)
                     try await self.pet.scale(to: size * 1.8, reduced: false)
-                    self.pet.sprite.action = .stretch
-                    try await Task.sleep(nanoseconds: 1_400_000_000)
+                    self.setPetAction(.stretch)
+                    try await Task.sleep(nanoseconds: UInt64((CatAction.stretch.durations.reduce(0, +) + 0.1) * 1_000_000_000))
                 }
                 try Task.checkCancellation()
                 guard self.reminderID == token else { return }
-                self.pet.sprite.action = .idle
+                self.setPetAction(.idle)
                 self.reminderMessageVisible = true; self.onShowReminder?()
                 try await Task.sleep(nanoseconds: 8_000_000_000)
                 try Task.checkCancellation()
@@ -218,34 +259,35 @@ final class AppModel: ObservableObject {
             do {
                 try await self.pet.scale(to: self.pet.normalSize, reduced: self.reducedMotion)
                 if let destination { try await self.pet.move(to: destination, speed: 230, reduced: self.reducedMotion) }
-                self.pet.recoverPosition(); self.pet.sprite.action = self.restRemaining != nil ? .sleep : .idle
+                self.pet.recoverPosition(); self.setPetAction(self.restRemaining != nil ? .sleep : .idle)
                 self.reminderActive = false; self.persist()
             } catch {}
         }
     }
     func cancelReminder(restoreHome: Bool) {
         guard reminderActive else { return }
-        reminderTask?.cancel(); reminderID = UUID()
+        reminderTask?.cancel(); reminderID = UUID(); pet.cancelMotion()
         onHideReminder?(); reminderMessageVisible = false
         let origin = restoreHome ? (home ?? pet.panel.frame.origin) : pet.panel.frame.origin
         pet.panel.setFrame(.init(origin: origin, size: .init(width: pet.normalSize, height: pet.normalSize)), display: true)
-        pet.recoverPosition(); pet.sprite.action = .idle
+        pet.recoverPosition(); setPetAction(.idle)
         home = nil; reminderActive = false
         if !isDemo { scheduler.snooze() }
     }
     func startRest() {
+        cancelPreview()
         savedPauseBeforeRest = paused
         restRemaining = settings.restMinutes * 60; restNeedsConfirmation = false
-        pet.sprite.action = .sleep
+        setPetAction(.sleep)
     }
     func confirmRest() {
         restRemaining = nil; restNeedsConfirmation = false
         scheduler.completeRest(); paused = savedPauseBeforeRest
-        pet.sprite.action = .idle; tick(); persist()
+        setPetAction(.idle); tick(); persist()
     }
     func cancelRest() {
         restRemaining = nil; restNeedsConfirmation = false
-        paused = savedPauseBeforeRest; pet.sprite.action = .idle; tick()
+        paused = savedPauseBeforeRest; setPetAction(.idle); tick()
     }
 
     func saveAPI(base: String, model: String, key newKey: String, streaming: Bool) {
@@ -291,6 +333,7 @@ final class AppModel: ObservableObject {
         guard !question.isEmpty, !sending else { return }
         guard apiReady else { chatError = "Add your API model in Settings before sending."; return }
         guard question.count <= 8000 else { chatError = "Please keep a quick question under 8,000 characters."; return }
+        cancelPreview()
         draft = ""; chatError = nil
         entries.append(.init(role: "user", text: question))
         let history = Array(entries.filter { $0.completed && !$0.text.isEmpty }.suffix(12)).map { ChatMessage(role: $0.role, content: String($0.text.prefix(12000))) }
@@ -299,14 +342,14 @@ final class AppModel: ObservableObject {
         let answerID = entry.id; entries.append(entry); sending = true
         let token = UUID(); requestID = token
         let configuration = apiConfiguration
-        if !reminderActive { pet.sprite.action = .think }
+        if !reminderActive { setPetAction(.think) }
         chatTask = Task { [weak self] in
             guard let self else { return }
             do {
                 try await self.client.complete(configuration: configuration, messages: messages) { [weak self] text in
                     guard let self, self.requestID == token, let index = self.entries.firstIndex(where: { $0.id == answerID }) else { return }
                     self.entries[index].text += text
-                    if !self.reminderActive { self.pet.sprite.action = .talk }
+                    if !self.reminderActive { self.setPetAction(.talk) }
                 }
                 try Task.checkCancellation()
                 guard self.requestID == token else { return }
@@ -321,13 +364,13 @@ final class AppModel: ObservableObject {
             guard self.requestID == token else { return }
             self.entries.removeAll { $0.id == answerID && $0.text.isEmpty }
             self.sending = false
-            if !self.reminderActive { self.pet.sprite.action = .idle }
+            if !self.reminderActive { self.setPetAction(.idle) }
         }
     }
     func stopChat() {
         requestID = UUID(); chatTask?.cancel(); chatTask = nil; sending = false
         entries.removeAll { $0.role == "assistant" && $0.text.isEmpty }
-        if !reminderActive { pet.sprite.action = .idle }
+        if !reminderActive { setPetAction(.idle) }
     }
-    func shutdown() { timer?.invalidate(); previewTask?.cancel(); chatTask?.cancel(); testTask?.cancel(); cancelReminder(restoreHome: true); persist() }
+    func shutdown() { timer?.invalidate(); cancelPreview(); chatTask?.cancel(); testTask?.cancel(); cancelReminder(restoreHome: true); persist() }
 }

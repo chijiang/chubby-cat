@@ -7,6 +7,7 @@ let package = Package(
     products: [.executable(name: "chubby-cat", targets: ["ChubbyCat"])],
     targets: [
         .target(name: "ChubbyCatCore"),
+        .executableTarget(name: "ChubbyCatArtExporter", dependencies: ["ChubbyCatCore"], path: "Tools/CatArtExporter"),
         .executableTarget(name: "ChubbyCat", dependencies: ["ChubbyCatCore"], resources: [.copy("Resources")]),
         .executableTarget(name: "ChubbyCatChecks", dependencies: ["ChubbyCatCore"], path: "Tests/ChubbyCatCoreTests")
     ],

@@ -1,28 +1,12 @@
 import AppKit
 import ChubbyCatCore
 
-enum CatAction: String, CaseIterable, Identifiable {
-    case idle, walk, stretch, think, talk, sleep
-    var id: String { rawValue }
-    var label: String { ["idle": "Relax", "walk": "Walk", "stretch": "Stretch", "think": "Think", "talk": "Chat", "sleep": "Nap"][rawValue]! }
-    var row: Int { Self.allCases.firstIndex(of: self)! }
-    var durations: [Double] {
-        switch self {
-        case .idle: return [1.8, 0.12, 0.1, 0.12, 0.4, 1.46]
-        case .walk: return Array(repeating: 0.125, count: 6)
-        case .stretch: return [0.16, 0.18, 0.24, 0.35, 0.2, 0.18]
-        case .think: return Array(repeating: 0.25, count: 6)
-        case .talk: return Array(repeating: 0.14, count: 6)
-        case .sleep: return Array(repeating: 0.5, count: 6)
-        }
-    }
-}
-
 final class SpriteAtlas {
     static let shared = SpriteAtlas()
     let frames: [[NSImage]]
     let bitmaps: [[NSBitmapImageRep]]
     let master: NSImage
+    var framePixelSize: Int { bitmaps[0][0].pixelsWide }
 
     private init() {
         let packaged = Bundle.main.resourceURL
@@ -30,6 +14,22 @@ final class SpriteAtlas {
         if let packaged, FileManager.default.fileExists(atPath: packaged.appendingPathComponent("cat-atlas.png").path) { root = packaged }
         else { root = Bundle.module.resourceURL! }
         master = NSImage(contentsOf: root.appendingPathComponent("cat-master.png")) ?? NSImage(size: .init(width: 512, height: 512))
+        let frameRoot = root.appendingPathComponent("cat-frames")
+        if let data = try? Data(contentsOf: frameRoot.appendingPathComponent("index.json")),
+           let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let names = manifest["frames"] as? [[String]], names.count == 6, names.allSatisfy({ $0.count == 6 }) {
+            var images: [[NSImage]] = [], masks: [[NSBitmapImageRep]] = []
+            for row in names {
+                var imageRow: [NSImage] = [], bitmapRow: [NSBitmapImageRep] = []
+                for name in row {
+                    guard let image = NSImage(contentsOf: frameRoot.appendingPathComponent(name)),
+                          let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { fatalError("Missing cat frame: \(name)") }
+                    imageRow.append(image); bitmapRow.append(NSBitmapImageRep(cgImage: cg))
+                }
+                images.append(imageRow); masks.append(bitmapRow)
+            }
+            frames = images; bitmaps = masks; return
+        }
         guard let source = NSImage(contentsOf: root.appendingPathComponent("cat-atlas.png")),
               let cg = source.cgImage(forProposedRect: nil, context: nil, hints: nil) else { fatalError("Bundled cat artwork is missing.") }
         // Hand-mapped design regions: the source sheet is not an evenly spaced atlas.
@@ -77,11 +77,23 @@ final class SpriteAtlas {
 }
 
 final class PetSpriteView: NSView {
-    var action: CatAction = .idle { didSet { if action != oldValue { frameIndex = 0; elapsed = 0; needsDisplay = true } } }
-    var mirrored = false { didSet { needsDisplay = true } }
-    var reducedMotion = false
-    var frameIndex = 0
-    private var elapsed: Double = 0
+    var action: CatAction = .idle {
+        didSet {
+            guard action != oldValue else { return }
+            if !reducedMotion {
+                outgoing = SpriteAtlas.shared.frames[oldValue.row][frameIndex]
+                transitionElapsed = 0
+            } else { outgoing = nil }
+            playback.setAction(action); frameIndex = 0; needsDisplay = true
+        }
+    }
+    var mirrored = false { didSet { if mirrored != oldValue { outgoing = nil; needsDisplay = true } } }
+    var reducedMotion = false { didSet { if reducedMotion { outgoing = nil; frameIndex = 0 }; needsDisplay = true } }
+    private(set) var frameIndex = 0
+    private var playback = AnimationPlayback()
+    private var outgoing: NSImage?
+    private var transitionElapsed: Double = 0
+    var travelDistance: Double?
     var onClick: (() -> Void)?
     var onDragStart: (() -> Void)?
     var onDragEnd: (() -> Void)?
@@ -94,29 +106,39 @@ final class PetSpriteView: NSView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     func step(_ seconds: Double) {
-        guard !reducedMotion else { if frameIndex != 0 { frameIndex = 0; needsDisplay = true }; return }
-        elapsed += seconds
-        let durations = action.durations
-        if elapsed >= durations[frameIndex] {
-            elapsed = 0
-            frameIndex = action == .stretch ? min(5, frameIndex + 1) : (frameIndex + 1) % 6
-            needsDisplay = true
+        guard seconds.isFinite, seconds >= 0 else { return }
+        guard !reducedMotion else {
+            if frameIndex != 0 { frameIndex = 0; needsDisplay = true }
+            return
+        }
+        playback.advance(by: seconds)
+        let next = action == .walk && travelDistance != nil
+            ? CatMotion.walkFrame(distance: travelDistance!, size: bounds.width)
+            : playback.frameIndex
+        if next != frameIndex { frameIndex = next; needsDisplay = true }
+        if outgoing != nil {
+            transitionElapsed += seconds; needsDisplay = true
+            if transitionElapsed >= 0.16 { outgoing = nil }
         }
     }
     override func draw(_ dirtyRect: NSRect) {
         NSGraphicsContext.current?.imageInterpolation = .high
         NSGraphicsContext.saveGraphicsState()
         if mirrored { let transform = NSAffineTransform(); transform.translateX(by: bounds.width, yBy: 0); transform.scaleX(by: -1, yBy: 1); transform.concat() }
-        SpriteAtlas.shared.frames[action.row][frameIndex].draw(in: bounds)
+        let amount = reducedMotion ? 1 : min(1, transitionElapsed / 0.16)
+        if let outgoing { outgoing.draw(in: bounds, from: .zero, operation: .sourceOver, fraction: 1 - amount) }
+        let displayedAction: CatAction = reducedMotion ? .idle : action
+        SpriteAtlas.shared.frames[displayedAction.row][frameIndex].draw(in: bounds, from: .zero, operation: .sourceOver, fraction: outgoing == nil ? 1 : amount)
         NSGraphicsContext.restoreGraphicsState()
     }
     func containsCat(_ local: NSPoint) -> Bool {
         guard bounds.contains(local), bounds.width > 0 else { return false }
-        let normalizedX = Int(local.x / bounds.width * 512)
-        let x = mirrored ? 511 - normalizedX : normalizedX
-        let y = 511 - Int(local.y / bounds.height * 512)
-        guard (0..<512).contains(x), (0..<512).contains(y) else { return false }
-        return (SpriteAtlas.shared.bitmaps[action.row][frameIndex].colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.2
+        let pixels = SpriteAtlas.shared.framePixelSize
+        let normalizedX = Int(local.x / bounds.width * Double(pixels))
+        let x = mirrored ? pixels - 1 - normalizedX : normalizedX
+        let y = pixels - 1 - Int(local.y / bounds.height * Double(pixels))
+        guard (0..<pixels).contains(x), (0..<pixels).contains(y) else { return false }
+        return (SpriteAtlas.shared.bitmaps[(reducedMotion ? CatAction.idle : action).row][reducedMotion ? 0 : frameIndex].colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.2
     }
     override func mouseDown(with event: NSEvent) {
         mouseStart = NSEvent.mouseLocation
@@ -144,6 +166,8 @@ final class PetWindowController {
     let panel: PetPanel
     let sprite = PetSpriteView(frame: .zero)
     private var timer: Timer?
+    private var lastFrameTime = ProcessInfo.processInfo.systemUptime
+    private var motionID = UUID()
     var enabled = true
     var isSystemActive = true
     var normalSize: Double = 190
@@ -156,15 +180,18 @@ final class PetWindowController {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         panel.contentView = sprite
         sprite.autoresizingMask = [.width, .height]
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 12, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, self.enabled, self.isSystemActive, self.panel.isVisible else { return }
-                self.sprite.step(1.0 / 12)
+                guard let self else { return }
+                let now = ProcessInfo.processInfo.systemUptime
+                let delta = max(0, now - self.lastFrameTime); self.lastFrameTime = now
+                guard self.enabled, self.isSystemActive, self.panel.isVisible else { return }
+                self.sprite.step(delta)
                 let local = NSPoint(x: NSEvent.mouseLocation.x - self.panel.frame.minX, y: NSEvent.mouseLocation.y - self.panel.frame.minY)
                 self.panel.ignoresMouseEvents = !self.sprite.isDragging && !self.sprite.containsCat(local)
             }
         }
-        timer?.tolerance = 0.02
+        timer?.tolerance = 0.005
     }
     var screen: NSScreen { panel.screen ?? NSScreen.main ?? NSScreen.screens[0] }
     func show(at position: NSPoint? = nil) {
@@ -182,25 +209,43 @@ final class PetWindowController {
     func resize(to size: Double) {
         normalSize = size
         let old = panel.frame
-        panel.setFrame(NSRect(x: old.midX - size / 2, y: old.minY, width: size, height: size), display: true)
+        applyAnchoredFrame(CatMotion.scaledFrame(old, size: size))
         recoverPosition()
     }
+    func cancelMotion() { motionID = UUID(); sprite.travelDistance = nil }
     func move(to target: NSPoint, speed: Double, reduced: Bool) async throws {
+        try Task.checkCancellation()
         let start = panel.frame.origin
         let distance = hypot(target.x - start.x, target.y - start.y)
-        sprite.mirrored = target.x < start.x; sprite.action = .walk
-        let duration = reduced ? 0 : max(0.35, distance / speed)
-        try await animate(duration: duration) { progress in
-            self.panel.setFrameOrigin(.init(x: start.x + (target.x - start.x) * progress, y: start.y + (target.y - start.y) * progress))
+        guard distance > 0.5 else { return }
+        let token = UUID(); motionID = token
+        if !reduced { sprite.mirrored = target.x < start.x; sprite.travelDistance = 0; sprite.action = .walk }
+        defer {
+            if motionID == token {
+                sprite.travelDistance = nil
+                if sprite.action == .walk { sprite.action = .idle }
+            }
         }
-        sprite.action = .idle
+        let duration = reduced ? 0 : max(0.35, distance / max(1, speed))
+        try await animate(duration: duration) { progress in
+            guard self.motionID == token else { return }
+            self.panel.setFrameOrigin(.init(x: start.x + (target.x - start.x) * progress, y: start.y + (target.y - start.y) * progress))
+            self.sprite.travelDistance = distance * progress
+        }
     }
     func scale(to size: Double, reduced: Bool) async throws {
         let initial = panel.frame
         try await animate(duration: reduced ? 0 : 0.45) { progress in
             let current = initial.width + (size - initial.width) * progress
-            self.panel.setFrame(.init(x: initial.midX - current / 2, y: initial.minY + (initial.height - current) * 0.11, width: current, height: current), display: true)
+            self.applyAnchoredFrame(CatMotion.scaledFrame(initial, size: current))
         }
+    }
+    private func applyAnchoredFrame(_ frame: CGRect) {
+        // NSWindow floors fractional origins. Round explicitly so scale-in/out
+        // cannot accumulate a one-point downward drift on each cycle.
+        var rounded = frame
+        rounded.origin = CGPoint(x: frame.minX.rounded(), y: frame.minY.rounded())
+        panel.setFrame(rounded, display: true)
     }
     private func animate(duration: Double, update: @escaping (Double) -> Void) async throws {
         guard duration > 0 else { try Task.checkCancellation(); update(1); return }

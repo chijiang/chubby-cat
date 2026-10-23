@@ -131,12 +131,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 enum ChubbyCatMain {
     @MainActor static func main() {
         let app = NSApplication.shared
+        if CommandLine.arguments.contains("--animation-checks") {
+            app.setActivationPolicy(.accessory)
+            Task { await AnimationChecks.run() }
+            app.run()
+            return
+        }
         if CommandLine.arguments.contains("--smoke-test") {
             let atlas = SpriteAtlas.shared
             precondition(atlas.frames.count == 6 && atlas.frames.allSatisfy { $0.count == 6 })
             let pet = PetWindowController()
             precondition(!pet.panel.canBecomeKey && !pet.panel.isOpaque)
-            precondition(atlas.bitmaps.allSatisfy { $0.allSatisfy { $0.pixelsWide == 512 && $0.pixelsHigh == 512 } })
+            precondition(atlas.bitmaps.allSatisfy { $0.allSatisfy { $0.pixelsWide == atlas.framePixelSize && $0.pixelsHigh == atlas.framePixelSize } })
             print("SMOKE PASS: 36 normalized frames, bundled master, alpha masks, nonactivating transparent pet panel")
             return
         }
