@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "sourceSheet": "animation-keyframes-v3.png",
+  "status": "keyframe-design-not-runtime-atlas",
+  "character": "user-photo-silver-tabby",
+  "units": "milliseconds",
+  "layout": {
+    "logicalRows": 6,
+    "posesPerRow": 6,
+    "note": "Rows describe reading order only. Do not assume equal pixel cells or crop rectangles before frame alignment."
+  },
+  "exportTarget": {
+    "frameSizePixels": [
+      512,
+      512
+    ],
+    "anchorNormalized": [
+      0.5,
+      0.88
+    ],
+    "alpha": "transparent",
+    "runtimeReady": false
+  },
+  "animations": [
+    {
+      "id": "idle",
+      "row": 1,
+      "frames": 6,
+      "durationsMs": [
+        1800,
+        120,
+        100,
+        120,
+        400,
+        1460
+      ],
+      "loop": true
+    },
+    {
+      "id": "walk-right",
+      "row": 2,
+      "frames": 6,
+      "durationsMs": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        125
+      ],
+      "loop": true,
+      "mirroredVariant": "walk-left"
+    },
+    {
+      "id": "stretch",
+      "row": 3,
+      "frames": 6,
+      "durationsMs": [
+        160,
+        180,
+        240,
+        350,
+        200,
+        180
+      ],
+      "loop": false
+    },
+    {
+      "id": "think",
+      "row": 4,
+      "frames": 6,
+      "durationsMs": [
+        250,
+        250,
+        250,
+        250,
+        250,
+        250
+      ],
+      "loop": true
+    },
+    {
+      "id": "talk",
+      "row": 5,
+      "frames": 6,
+      "durationsMs": [
+        140,
+        140,
+        140,
+        140,
+        140,
+        140
+      ],
+      "loop": true
+    },
+    {
+      "id": "sleep",
+      "row": 6,
+      "frames": 6,
+      "durationsMs": [
+        500,
+        500,
+        500,
+        500,
+        500,
+        500
+      ],
+      "loop": true
+    }
+  ],
+  "transforms": {
+    "reminderScale": 1.8,
+    "scaleInMs": 500,
+    "scaleOutMs": 400,
+    "translation": "window-coordinates-not-drawn-into-frames"
+  },
+  "reminder": {
+    "afterActiveMinutes": 90,
+    "holdMsRange": [
+      6000,
+      8000
+    ],
+    "returnToOriginalPosition": true
+  },
+  "nextProductionSteps": [
+    "check anatomy and markings",
+    "align each frame canvas and ground baseline",
+    "clean alpha edges",
+    "export individual PNG frames",
+    "preview loops and transitions"
+  ]
+}
