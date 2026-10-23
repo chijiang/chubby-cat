@@ -1,4 +1,4 @@
-# Desk Kitty
+# chubby-cat
 
 A native macOS desktop cat with quick AI Q&A and gentle screen-break reminders. The silver tabby character is based on the user's reference photos.
 
@@ -6,13 +6,13 @@ A native macOS desktop cat with quick AI Q&A and gentle screen-break reminders. 
 
 The companion dashboard brings together the screen-break timer, quiet-time controls and six animation previews. **Demo reminder** lets you try the center-screen walk, stretch and return without waiting 90 minutes.
 
-![Desk Kitty companion dashboard with the screen-break countdown and six cat animation previews](docs/images/companion.png)
+![chubby-cat companion dashboard with the screen-break countdown and six cat animation previews](docs/images/companion.png)
 
 Quick Q&A — ask your cat a question
 
 Click the desktop cat or use the global shortcut to open Quick Q&A. This screenshot shows the first-run screen before connecting an API; add your provider and model in Settings to start chatting.
 
-![Desk Kitty Quick Q&A first-run screen with an input field and connection-settings shortcut](docs/images/quick-qa.png)
+![chubby-cat Quick Q&A first-run screen with an input field and connection-settings shortcut](docs/images/quick-qa.png)
 
 
 
@@ -20,7 +20,7 @@ Settings — companion, breaks and API connection
 
 Adjust the cat's size, motion, startup and shortcut preferences, then set the reminder interval and connect your own compatible API.
 
-![Desk Kitty settings showing companion preferences, the 90-minute reminder and API connection fields](docs/images/settings.png)
+![chubby-cat settings showing companion preferences, the 90-minute reminder and API connection fields](docs/images/settings.png)
 
 
 
@@ -28,7 +28,7 @@ Interface screenshots are captured from the running macOS prototype. Shown prefe
 
 ## Run the prototype
 
-Open `dist/Desk Kitty.app`. The companion window and floating desktop cat appear together. Closing the companion window keeps the cat and timer running; quit from the cat icon in the menu bar.
+Open `dist/chubby-cat.app`. The companion window and floating desktop cat appear together. Closing the companion window keeps the cat and timer running; quit from the cat icon in the menu bar.
 
 To rebuild with Apple's Command Line Tools (Swift 6+, macOS 14+):
 
@@ -38,6 +38,8 @@ bash scripts/build-app.sh
 
 The build has no downloaded dependencies. Full Xcode and its XCTest framework are not required. The script keeps compiler caches in the project and applies a local ad-hoc signature. It does not install the app or enable launch-at-login automatically.
 
+The project is now named **chubby-cat**. The workspace folder may still be named `desk-kitty`; existing preferences and Keychain identifiers are retained for compatibility. Older screenshots below may show the previous name.
+
 ## Try it
 
 1. Drag the desktop cat to a favorite spot. Click it to open the small Quick Q&A window; right-click for controls.
@@ -46,7 +48,7 @@ The build has no downloaded dependencies. Full Xcode and its XCTest framework ar
 4. Use **Pause timer**, **Quiet time**, and **Hide from desktop** as needed. The menu bar retains controls when windows are closed.
 5. In **Settings**, configure the reminder/rest interval, pet size, reduced motion, optional launch-at-login and global shortcut.
 
-Automatic reminders are deferred while a Desk Kitty input/settings window is active, during quiet time, while paused, while the cat is hidden, and while the screen session is unavailable. They remain pending until an appropriate moment. The demo can run while the companion window is open.
+Automatic reminders are deferred while a chubby-cat input/settings window is active, during quiet time, while paused, while the cat is hidden, and while the screen session is unavailable. They remain pending until an appropriate moment. The demo can run while the companion window is open.
 
 ## Connect an API
 
@@ -81,15 +83,18 @@ Only typed chat content and a brief companion instruction are sent directly to t
 # Framework-free deterministic core regression checks
 bash scripts/test.sh
 
+# Native clipboard shortcut checks (temporarily uses and restores the clipboard)
+'dist/chubby-cat.app/Contents/MacOS/chubby-cat' --clipboard-checks
+
 # Bundled resources, 36 runtime-normalized frames, alpha masks and native pet panel
-'dist/Desk Kitty.app/Contents/MacOS/DeskKitty' --smoke-test
+'dist/chubby-cat.app/Contents/MacOS/chubby-cat' --smoke-test
 
 # In a second terminal, run a local compatible-API fixture
 python3 scripts/api-fixture.py
-'dist/Desk Kitty.app/Contents/MacOS/DeskKitty' --test-api http://127.0.0.1:18743/v1
+'dist/chubby-cat.app/Contents/MacOS/chubby-cat' --test-api http://127.0.0.1:18743/v1
 
 # Native chat/window/Keychain regressions (fixture running)
-'dist/Desk Kitty.app/Contents/MacOS/DeskKitty' --app-checks
+'dist/chubby-cat.app/Contents/MacOS/chubby-cat' --app-checks
 ```
 
 The integration check makes real URLSession requests for both fragmented SSE and JSON. It does not use a real API key or contact an external provider. Stop the fixture with Control-C. Native panel smoke checks require an available logged-in macOS desktop; restricted execution sandboxes may deny window-service access or localhost sockets.

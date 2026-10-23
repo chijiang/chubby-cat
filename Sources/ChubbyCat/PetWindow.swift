@@ -1,5 +1,5 @@
 import AppKit
-import DeskKittyCore
+import ChubbyCatCore
 
 enum CatAction: String, CaseIterable, Identifiable {
     case idle, walk, stretch, think, talk, sleep
@@ -25,7 +25,7 @@ final class SpriteAtlas {
     let master: NSImage
 
     private init() {
-        let packaged = Bundle.main.resourceURL?.appendingPathComponent("DeskKitty_DeskKitty.bundle/Resources")
+        let packaged = Bundle.main.resourceURL
         let root: URL
         if let packaged, FileManager.default.fileExists(atPath: packaged.appendingPathComponent("cat-atlas.png").path) { root = packaged }
         else { root = Bundle.module.resourceURL! }

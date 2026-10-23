@@ -16,7 +16,7 @@ struct CompanionRootView: View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
                 Image(nsImage: SpriteAtlas.shared.master).resizable().scaledToFit().frame(width: 92, height: 112).frame(maxWidth: .infinity).padding(.top, 20)
-                Text("Desk Kitty").font(.system(size: 21, weight: .semibold, design: .rounded)).frame(maxWidth: .infinity)
+                Text("chubby-cat").font(.system(size: 21, weight: .semibold, design: .rounded)).frame(maxWidth: .infinity)
                 Text("A small friend for your day.").font(.system(size: 11)).foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.bottom, 22)
                 ForEach(CompanionTab.allCases, id: \.self) { tab in
                     Button { model.selectedTab = tab } label: {
@@ -217,7 +217,7 @@ struct SettingsView: View {
                     }
                     if let message = model.credentialStatus { Text(message).font(.system(size: 11)).foregroundStyle(.secondary) }
                     if let message = model.connectionStatus { Text(message).font(.system(size: 11)).foregroundStyle(.secondary) }
-                    Text("Requests go directly to this service. No Desk Kitty account or cloud relay. Testing sends one short prompt and may use API credit.").font(.system(size: 11)).foregroundStyle(.secondary).lineSpacing(3)
+                    Text("Requests go directly to this service. No chubby-cat account or cloud relay. Testing sends one short prompt and may use API credit.").font(.system(size: 11)).foregroundStyle(.secondary).lineSpacing(3)
                 }.font(.system(size: 13)).textFieldStyle(.roundedBorder)
                 Divider()
                 HStack { Text("Conversations are kept in memory and cleared when you quit.").font(.system(size: 11)).foregroundStyle(.secondary); Spacer(); Button("Clear conversation") { model.newConversation() }.font(.system(size: 11)) }

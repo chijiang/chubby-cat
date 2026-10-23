@@ -1,6 +1,6 @@
 import Foundation
 import Security
-import DeskKittyCore
+import ChubbyCatCore
 
 struct APIConfiguration {
     var baseURL: String

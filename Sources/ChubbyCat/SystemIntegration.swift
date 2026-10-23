@@ -38,7 +38,7 @@ final class SystemIntegration {
         do {
             if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             model?.launchAtLogin = SMAppService.mainApp.status == .enabled
-            model?.loginError = SMAppService.mainApp.status == .requiresApproval ? "Approve Desk Kitty in System Settings → General → Login Items." : nil
+            model?.loginError = SMAppService.mainApp.status == .requiresApproval ? "Approve chubby-cat in System Settings → General → Login Items." : nil
         } catch { model?.launchAtLogin = SMAppService.mainApp.status == .enabled; model?.loginError = error.localizedDescription }
     }
     deinit {

@@ -1,6 +1,6 @@
 import AppKit
 import SwiftUI
-import DeskKittyCore
+import ChubbyCatCore
 
 final class CompanionWindow: NSWindow {
     override func cancelOperation(_ sender: Any?) { performClose(sender) }
@@ -18,19 +18,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        ApplicationMenu.install()
+        if CommandLine.arguments.contains("--clipboard-checks") {
+            Task { await ClipboardChecks.run() }
+            return
+        }
         model = AppModel(defaults: CommandLine.arguments.contains("--app-checks") ? UserDefaults(suiteName: "com.deskkitty.prototype.checks")! : .standard)
         integration = SystemIntegration(model: model)
         model.onShowWindow = { [weak self] in self?.showCompanion() }
         model.onShowChat = { [weak self] in self?.showChat() }
         model.onShowReminder = { [weak self] in self?.showReminder() }
         model.onHideReminder = { [weak self] in self?.reminderPanel?.orderOut(nil) }
-        model.onRefreshMenu = { [weak self] in guard let self else { return }; self.statusItem?.button?.toolTip = "Desk Kitty · \(AppModel.clock(self.model.remaining)) until a break" }
+        model.onRefreshMenu = { [weak self] in guard let self else { return }; self.statusItem?.button?.toolTip = "chubby-cat · \(AppModel.clock(self.model.remaining)) until a break" }
         model.onHotkeyChanged = { [weak self] in self?.registerShortcut() }
         model.pet.sprite.contextMenu = { [weak self] in self?.makeMenu() ?? NSMenu() }
         hotkey.action = { [weak self] in Task { @MainActor in self?.model.openChat() } }
         registerShortcut()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "cat.fill", accessibilityDescription: "Desk Kitty")
+        statusItem.button?.image = NSImage(systemSymbolName: "cat.fill", accessibilityDescription: "chubby-cat")
         let menu = NSMenu(); menu.delegate = self; statusItem.menu = menu
         if !CommandLine.arguments.contains("--background") { showCompanion() }
         if CommandLine.arguments.contains("--demo") { DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.model.beginReminder(demo: true) } }
@@ -44,7 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     @objc func showCompanion() {
         if controlWindow == nil {
             let window = CompanionWindow(contentRect: .init(x: 0, y: 0, width: 980, height: 750), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-            window.title = "Desk Kitty"; window.titlebarAppearsTransparent = true
+            window.title = "chubby-cat"; window.titlebarAppearsTransparent = true
             window.isReleasedWhenClosed = false; window.minSize = .init(width: 880, height: 690); window.delegate = self
             window.contentView = NSHostingView(rootView: CompanionRootView(model: model, onLoginChange: { [weak self] value in self?.integration?.setLogin(value) }))
             window.center(); controlWindow = window
@@ -95,7 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         menu.removeAllItems()
         let status = NSMenuItem(title: "Next break in \(AppModel.clock(model.remaining))", action: nil, keyEquivalent: ""); status.isEnabled = false; menu.addItem(status)
         menu.addItem(.separator())
-        item("Open Desk Kitty", #selector(showCompanion), in: menu)
+        item("Open chubby-cat", #selector(showCompanion), in: menu)
         item("Ask Kitty…", #selector(showChat), in: menu)
         item(model.paused ? "Resume timer" : "Pause timer", #selector(togglePause), in: menu)
         item("Demo reminder", #selector(demo), in: menu)
@@ -105,7 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         if model.restRemaining != nil || model.restNeedsConfirmation { item("I've finished resting", #selector(confirmRest), in: menu); item("Cancel rest", #selector(cancelRest), in: menu) }
         menu.addItem(.separator())
         item("Settings…", #selector(showSettings), in: menu)
-        let quit = NSMenuItem(title: "Quit Desk Kitty", action: #selector(quit), keyEquivalent: "q"); quit.target = self; menu.addItem(quit)
+        let quit = NSMenuItem(title: "Quit chubby-cat", action: #selector(quit), keyEquivalent: "q"); quit.target = self; menu.addItem(quit)
     }
     private func item(_ title: String, _ selector: Selector, in menu: NSMenu) { let item = NSMenuItem(title: title, action: selector, keyEquivalent: ""); item.target = self; menu.addItem(item) }
     @objc func showSettings() { model.selectedTab = .settings; showCompanion() }
@@ -120,7 +125,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 }
 
 @main
-enum DeskKittyMain {
+enum ChubbyCatMain {
     @MainActor static func main() {
         let app = NSApplication.shared
         if CommandLine.arguments.contains("--smoke-test") {
@@ -140,7 +145,7 @@ enum DeskKittyMain {
                     for streaming in [true, false] {
                         var answer = ""
                         try await client.complete(configuration: .init(baseURL: endpoint, model: "fixture-cat", key: "", streaming: streaming), messages: [.init(role: "user", content: "hello")]) { answer += $0 }
-                        guard answer == "Hello from Desk Kitty." else { throw ChatFailure.provider("Integration response did not match fixture.") }
+                        guard answer == "Hello from chubby-cat." else { throw ChatFailure.provider("Integration response did not match fixture.") }
                         print("API PASS: \(streaming ? "SSE" : "JSON") via real URLSession")
                     }
                     exit(0)

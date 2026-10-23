@@ -1,4 +1,4 @@
-# Desk Kitty Comprehensive Prototype Implementation Plan
+# chubby-cat Comprehensive Prototype Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -30,17 +30,17 @@
 ## File Structure
 
 - Package.swift — pure core library, app executable, XCTest targets.
-- Sources/DeskKittyCore/BreakScheduler.swift — elapsed time and break state transitions.
-- Sources/DeskKittyCore/ChatProtocol.swift — URL validation, requests, SSE and completion decoding.
-- Sources/DeskKittyCore/Geometry.swift — display-safe placement and sprite mapping.
-- Sources/DeskKitty/AppMain.swift — app lifecycle, menu bar, window ownership.
-- Sources/DeskKitty/AppModel.swift — observable app state, scheduler, reminder coordination.
-- Sources/DeskKitty/PetWindow.swift — sprite rendering, alpha hit-testing, dragging and movement.
-- Sources/DeskKitty/CompanionViews.swift — dashboard, settings, reminders, chat UI.
-- Sources/DeskKitty/ChatClient.swift — cancellable URLSession streaming and Keychain.
-- Sources/DeskKitty/SystemIntegration.swift — system events, hotkey and login support.
-- Sources/DeskKitty/Resources — bundled art.
-- Tests/DeskKittyCoreTests — scheduler and API/geometry regression tests.
+- Sources/ChubbyCatCore/BreakScheduler.swift — elapsed time and break state transitions.
+- Sources/ChubbyCatCore/ChatProtocol.swift — URL validation, requests, SSE and completion decoding.
+- Sources/ChubbyCatCore/Geometry.swift — display-safe placement and sprite mapping.
+- Sources/ChubbyCat/AppMain.swift — app lifecycle, menu bar, window ownership.
+- Sources/ChubbyCat/AppModel.swift — observable app state, scheduler, reminder coordination.
+- Sources/ChubbyCat/PetWindow.swift — sprite rendering, alpha hit-testing, dragging and movement.
+- Sources/ChubbyCat/CompanionViews.swift — dashboard, settings, reminders, chat UI.
+- Sources/ChubbyCat/ChatClient.swift — cancellable URLSession streaming and Keychain.
+- Sources/ChubbyCat/SystemIntegration.swift — system events, hotkey and login support.
+- Sources/ChubbyCat/Resources — bundled art.
+- Tests/ChubbyCatCoreTests — scheduler and API/geometry regression tests.
 - scripts/build-app.sh — build a local .app with resources and ad-hoc signature.
 - README.md — run instructions and explicit prototype limitations.
 
@@ -76,7 +76,7 @@
 
 ### Task 4: Package, verify and review
 
-- [ ] Build ad-hoc-signed `dist/Desk Kitty.app` and document launch/update procedure.
+- [ ] Build ad-hoc-signed `dist/chubby-cat.app` and document launch/update procedure.
 - [ ] Run core tests and app smoke/integration checks; launch and inspect actual UI when computer access allows.
 - [ ] Request one independent whole-project review as required by executing-plans; address material correctness findings and rerun checks.
 - [ ] Record tested behavior and limitations, including generated-art resolution, best-effort lock observability, unverified full-screen/multi-display cases and absence of notarization.

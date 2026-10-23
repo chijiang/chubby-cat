@@ -1,5 +1,5 @@
 import Foundation
-import DeskKittyCore
+import ChubbyCatCore
 
 final class BreakSchedulerTests {
     func testNinetyMinuteBoundaryAndPresentationIsOneShot() {

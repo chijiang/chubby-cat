@@ -4,6 +4,9 @@ Date: 2026-10-23. Platform: local Apple Silicon macOS, Apple Swift 6.3 Command L
 
 ## Checks to record
 
+- Rename/paste follow-up: package/product/app/display names changed to `chubby-cat`, modules to `ChubbyCat` / `ChubbyCatCore`. Workspace folder and existing bundle/preferences/Keychain identifiers stay compatible. Older README screenshots retain their original labels.
+- Clipboard regression: absent standard application/Edit menus reproduced Command-V failure in text and secure fields and Command-A failure. Added standard responder-chain menus (Undo/Redo/Cut/Copy/Paste/Select All and Quit). Native checks use temporary text, wait for actual key-window activation, and restore the original clipboard contents. Final native checks pass for Command-V in text, secure and multiline chat inputs, plus Command-A. All 16 core checks, packaged-resource smoke check, signature verification and plist validation also pass.
+
 - Core checks: **16 checks, 0 failures**, including timing, pause/snooze, checkpoint recovery, endpoint safety, Unicode/event boundaries, JSON decoding and screen placement.
 - Packaged app: builds successfully with Command Line Tools; `codesign --verify --deep --strict` and plist validation pass. Signature is local ad-hoc, not notarization.
 - Native resource/frame smoke check: **PASS**, 36 normalized frames, bundled master, alpha masks and nonactivating transparent panel. Initial duplicate Resources path was found and corrected; the packaged resource lookup works independently of the build-folder fallback.
@@ -14,7 +17,7 @@ Date: 2026-10-23. Platform: local Apple Silicon macOS, Apple Swift 6.3 Command L
 To repeat the native regressions while the fixture is running:
 
 ```bash
-'dist/Desk Kitty.app/Contents/MacOS/DeskKitty' --app-checks
+'dist/chubby-cat.app/Contents/MacOS/chubby-cat' --app-checks
 ```
 
 This mode uses an isolated preferences suite, temporary localhost configuration and no real API key. The main companion app's existing preferences are not changed by these checks.

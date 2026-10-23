@@ -1,1 +1,0 @@
-Desk Kitty artwork is based on the user's reference cat. See assets/cat and docs/cat-animation-design.md.

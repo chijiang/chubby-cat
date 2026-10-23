@@ -22,7 +22,7 @@ class Handler(BaseHTTPRequestHandler):
         if body.get('stream'):
             self.send_header('Content-Type', 'text/event-stream')
             self.end_headers()
-            for token in ['Hello ', 'from ', 'Desk ', 'Kitty.']:
+            for token in ['Hello ', 'from ', 'chubby-', 'cat.']:
                 event = ('data: ' + json.dumps({'choices': [{'delta': {'content': token}}]}) + '\n\n').encode()
                 # Split network writes in the middle of JSON, not at SSE boundaries.
                 half = len(event) // 2
@@ -33,7 +33,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({'choices': [{'message': {'role': 'assistant', 'content': 'Hello from Desk Kitty.'}}]}).encode())
+            self.wfile.write(json.dumps({'choices': [{'message': {'role': 'assistant', 'content': 'Hello from chubby-cat.'}}]}).encode())
     def log_message(self, *_):
         pass
 

@@ -2,13 +2,13 @@
 import PackageDescription
 
 let package = Package(
-    name: "DeskKitty",
+    name: "chubby-cat",
     platforms: [.macOS(.v14)],
-    products: [.executable(name: "DeskKitty", targets: ["DeskKitty"])],
+    products: [.executable(name: "chubby-cat", targets: ["ChubbyCat"])],
     targets: [
-        .target(name: "DeskKittyCore"),
-        .executableTarget(name: "DeskKitty", dependencies: ["DeskKittyCore"], resources: [.copy("Resources")]),
-        .executableTarget(name: "DeskKittyChecks", dependencies: ["DeskKittyCore"], path: "Tests/DeskKittyCoreTests")
+        .target(name: "ChubbyCatCore"),
+        .executableTarget(name: "ChubbyCat", dependencies: ["ChubbyCatCore"], resources: [.copy("Resources")]),
+        .executableTarget(name: "ChubbyCatChecks", dependencies: ["ChubbyCatCore"], path: "Tests/ChubbyCatCoreTests")
     ],
     swiftLanguageModes: [.v5]
 )

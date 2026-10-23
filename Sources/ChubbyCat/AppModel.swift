@@ -1,6 +1,6 @@
 import AppKit
 import SwiftUI
-import DeskKittyCore
+import ChubbyCatCore
 
 enum CompanionTab: String, CaseIterable { case companion = "Companion", chat = "Quick Q&A", settings = "Settings" }
 struct ConversationEntry: Identifiable {
