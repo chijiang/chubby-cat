@@ -1,5 +1,5 @@
 """Local API fixture for real streaming/nonstreaming transport checks. No external requests."""
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import time
 
@@ -9,9 +9,15 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
             return
         body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
-        if body.get('model') != 'fixture-cat' or not body.get('messages'):
+        if body.get('model') not in ['fixture-cat', 'fixture-fail', 'fixture-slow'] or not body.get('messages'):
             self.send_error(400)
             return
+        if body.get('model') == 'fixture-fail':
+            time.sleep(0.4)
+            self.send_error(500)
+            return
+        if body.get('model') == 'fixture-slow':
+            time.sleep(0.8)
         self.send_response(200)
         if body.get('stream'):
             self.send_header('Content-Type', 'text/event-stream')
@@ -35,4 +41,4 @@ if __name__ == '__main__':
     import sys
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 18743
     print(f'Fixture listening on 127.0.0.1:{port}', flush=True)
-    HTTPServer(('127.0.0.1', port), Handler).serve_forever()
+    ThreadingHTTPServer(('127.0.0.1', port), Handler).serve_forever()

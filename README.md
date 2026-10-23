@@ -61,6 +61,9 @@ bash scripts/test.sh
 # In a second terminal, run a local compatible-API fixture
 python3 scripts/api-fixture.py
 'dist/Desk Kitty.app/Contents/MacOS/DeskKitty' --test-api http://127.0.0.1:18743/v1
+
+# Native chat/window/Keychain regressions (fixture running)
+'dist/Desk Kitty.app/Contents/MacOS/DeskKitty' --app-checks
 ```
 
 The integration check makes real URLSession requests for both fragmented SSE and JSON. It does not use a real API key or contact an external provider. Stop the fixture with Control-C. Native panel smoke checks require an available logged-in macOS desktop; restricted execution sandboxes may deny window-service access or localhost sockets.

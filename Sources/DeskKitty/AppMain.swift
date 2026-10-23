@@ -18,7 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        model = AppModel()
+        model = AppModel(defaults: CommandLine.arguments.contains("--app-checks") ? UserDefaults(suiteName: "com.deskkitty.prototype.checks")! : .standard)
         integration = SystemIntegration(model: model)
         model.onShowWindow = { [weak self] in self?.showCompanion() }
         model.onShowChat = { [weak self] in self?.showChat() }
@@ -34,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let menu = NSMenu(); menu.delegate = self; statusItem.menu = menu
         if !CommandLine.arguments.contains("--background") { showCompanion() }
         if CommandLine.arguments.contains("--demo") { DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.model.beginReminder(demo: true) } }
+        if CommandLine.arguments.contains("--app-checks") { Task { await PrototypeChecks.run(self) } }
     }
     func registerShortcut() { model.shortcutStatus = hotkey.register(choice: model.settings.hotkeyChoice) }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -44,7 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         if controlWindow == nil {
             let window = CompanionWindow(contentRect: .init(x: 0, y: 0, width: 980, height: 750), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
             window.title = "Desk Kitty"; window.titlebarAppearsTransparent = true
-            window.isReleasedWhenClosed = false; window.minSize = .init(width: 880, height: 690)
+            window.isReleasedWhenClosed = false; window.minSize = .init(width: 880, height: 690); window.delegate = self
             window.contentView = NSHostingView(rootView: CompanionRootView(model: model, onLoginChange: { [weak self] value in self?.integration?.setLogin(value) }))
             window.center(); controlWindow = window
         }
@@ -66,7 +67,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             NSApp.activate(ignoringOtherApps: true); window.makeKeyAndOrderFront(nil)
         }
     }
-    func windowWillClose(_ notification: Notification) { if let window = notification.object as? NSWindow, window === chatWindow { model.stopChat() } }
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        let closingChat = window === chatWindow || (window === controlWindow && model.selectedTab == .chat)
+        let anotherChatVisible = (window !== chatWindow && chatWindow?.isVisible == true)
+            || (window !== controlWindow && controlWindow?.isVisible == true && model.selectedTab == .chat)
+        if closingChat && !anotherChatVisible { model.stopChat() }
+    }
     func showReminder() {
         if reminderPanel == nil {
             let panel = PetPanel(contentRect: .init(x: 0, y: 0, width: 385, height: 155), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)

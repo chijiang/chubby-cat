@@ -83,6 +83,13 @@
 
 ## Execution ledger
 
+- Task 1 complete: 16 deterministic checks pass through `bash scripts/test.sh`. Missing-type RED runs preceded implementation; the byte-SSE regression failed before its decoder existed, then passed.
+- Task 2 complete: all 36 frames loaded and normalized at runtime; packaged native smoke check passes. Corrected duplicated Resources lookup exposed by first native smoke run.
+- Task 3 complete: native companion/dashboard, floating chat, settings, reminders, menu bar, hotkey, system tracking and API transport implemented. Real fragmented SSE and JSON requests pass against localhost; no real provider credentials used.
+- Task 4 complete for prototype scope: app packaged, ad-hoc signature verified, native UI inspected and independent review performed. Four material review findings reproduced in native regression mode and fixed; full native checks then pass. Developer ID/public release/soak certification remain explicitly out of scope.
+- Final review fixes: last-chat-window cancellation, preserving a newly typed draft after failure, connection-test generation isolation, and Keychain deletion error handling. Native regression mode showed all four failures before fixes and zero afterward.
+- Deferred prototype polish: high-resolution sprite production and per-pose art cleanup. Full 90-minute and 8-hour wall-time validation, all full-screen/multi-display permutations, login-item approval and notarization remain release checks, as documented in README.
+
 - Ruling: The directory is not a git repository. Work in the user-provided workspace; no worktree or synthetic commits. Track implementation evidence here instead of git-backed skill helper scripts.
 - Ruling: The user explicitly said to go ahead with a comprehensive prototype. Execute in this chat without an additional plan-approval round.
 - Ruling: Retain source art unchanged and use runtime rendering for frame extraction. Generated source is roughly 200 pixels per pose, so large Retina display remains prototype quality until higher-resolution art is produced.

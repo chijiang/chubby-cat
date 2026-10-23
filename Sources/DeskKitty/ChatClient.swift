@@ -97,9 +97,15 @@ enum CredentialStore {
         guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess, let data = result as? Data else { return "" }
         return String(data: data, encoding: .utf8) ?? ""
     }
-    static func save(_ key: String, for endpoint: String) throws {
+    static func save(_ key: String, for endpoint: String, delete: (CFDictionary) -> OSStatus = { SecItemDelete($0) }) throws {
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: endpoint]
-        if key.isEmpty { SecItemDelete(query as CFDictionary); return }
+        if key.isEmpty {
+            let status = delete(query as CFDictionary)
+            guard status == errSecSuccess || status == errSecItemNotFound else {
+                throw ChatFailure.provider("Could not remove the saved API key from Keychain (\(status)).")
+            }
+            return
+        }
         let update: [String: Any] = [kSecValueData as String: Data(key.utf8)]
         let status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
         if status == errSecItemNotFound {

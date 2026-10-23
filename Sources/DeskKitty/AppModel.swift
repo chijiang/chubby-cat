@@ -65,13 +65,15 @@ final class AppModel: ObservableObject {
     private var chatTask: Task<Void, Never>?
     private var testTask: Task<Void, Never>?
     private var requestID = UUID()
+    private var connectionTestID = UUID()
     private var reminderID = UUID()
     private var home: NSPoint?
     private var isDemo = false
     private var savedPauseBeforeRest = false
+    private let defaults: UserDefaults
 
-    init() {
-        let defaults = UserDefaults.standard
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         let config = defaults.data(forKey: "settings").flatMap { try? JSONDecoder().decode(AppSettings.self, from: $0) } ?? AppSettings()
         settings = config
         let checkpoint = defaults.data(forKey: "breakCheckpoint").flatMap { try? JSONDecoder().decode(BreakCheckpoint.self, from: $0) }
@@ -143,11 +145,11 @@ final class AppModel: ObservableObject {
         persist(); onHotkeyChanged?()
     }
     func persist() {
-        if let data = try? JSONEncoder().encode(settings) { UserDefaults.standard.set(data, forKey: "settings") }
-        if let data = try? JSONEncoder().encode(scheduler.checkpoint) { UserDefaults.standard.set(data, forKey: "breakCheckpoint") }
+        if let data = try? JSONEncoder().encode(settings) { defaults.set(data, forKey: "settings") }
+        if let data = try? JSONEncoder().encode(scheduler.checkpoint) { defaults.set(data, forKey: "breakCheckpoint") }
         if !reminderActive { savePosition() }
     }
-    func savePosition() { UserDefaults.standard.set(pet.panel.frame.minX, forKey: "petX"); UserDefaults.standard.set(pet.panel.frame.minY, forKey: "petY") }
+    func savePosition() { defaults.set(pet.panel.frame.minX, forKey: "petX"); defaults.set(pet.panel.frame.minY, forKey: "petY") }
     func togglePet() {
         if petVisible { cancelReminder(restoreHome: true); pet.hide() } else { pet.show(at: pet.panel.frame.origin) }
         petVisible.toggle(); onRefreshMenu?()
@@ -251,7 +253,7 @@ final class AppModel: ObservableObject {
             _ = try ChatEndpoint.url(from: base)
             let base = base.trimmingCharacters(in: .whitespacesAndNewlines)
             try CredentialStore.save(newKey.trimmingCharacters(in: .whitespacesAndNewlines), for: base)
-            stopChat(); testTask?.cancel(); testingConnection = false
+            stopChat(); connectionTestID = UUID(); testTask?.cancel(); testingConnection = false
             entries = []; connectionStatus = nil
             settings.baseURL = base; settings.model = model.trimmingCharacters(in: .whitespacesAndNewlines); settings.streaming = streaming
             key = newKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -267,14 +269,20 @@ final class AppModel: ObservableObject {
     func testConnection() {
         guard !testingConnection else { return }
         connectionStatus = nil; testingConnection = true
+        let token = UUID(); connectionTestID = token
         let configuration = apiConfiguration
         testTask = Task { [weak self] in
             guard let self else { return }
             do {
                 try await self.client.complete(configuration: configuration, messages: [.init(role: "user", content: "Reply with just: hello")]) { _ in }
-                try Task.checkCancellation(); self.connectionStatus = "Connected. Your model returned text."
-            } catch is CancellationError { self.connectionStatus = nil }
-            catch { if !Task.isCancelled { self.connectionStatus = error.localizedDescription } }
+                try Task.checkCancellation()
+                guard self.connectionTestID == token else { return }
+                self.connectionStatus = "Connected. Your model returned text."
+            } catch {
+                guard self.connectionTestID == token else { return }
+                if !Task.isCancelled { self.connectionStatus = error.localizedDescription }
+            }
+            guard self.connectionTestID == token else { return }
             self.testingConnection = false
         }
     }
@@ -305,7 +313,10 @@ final class AppModel: ObservableObject {
                 if let index = self.entries.firstIndex(where: { $0.id == answerID }) { self.entries[index].completed = true }
             } catch {
                 guard self.requestID == token else { return }
-                if !Task.isCancelled { self.chatError = error.localizedDescription; self.draft = question }
+                if !Task.isCancelled {
+                    self.chatError = error.localizedDescription
+                    if self.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { self.draft = question }
+                }
             }
             guard self.requestID == token else { return }
             self.entries.removeAll { $0.id == answerID && $0.text.isEmpty }
